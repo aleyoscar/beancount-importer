@@ -1,5 +1,5 @@
 import typer
-from .ofx import ofx_load
+from .ofx import ofx_load, ofx_pending
 from .ledger import ledger_load
 from pathlib import Path
 from prompt_toolkit import PromptSession
@@ -70,6 +70,12 @@ def bean_import(
         filtered = ofx_data['transactions']
     
     # Match transactions not in beans into pending
+    pending = ofx_pending(filtered, ledger_data['transactions'], ofx_data['account_info']['account_id'])
+    if len(pending):
+        console.print(f"Found [number]{len(pending)}[/] transactions not in LEDGER")
+    else:
+        err_console.print(f"[warning]No pending transactions found. Exiting.[/]")
+
     # Parse each pending transaction
         # Check if payee in payee file
             # YES: replace

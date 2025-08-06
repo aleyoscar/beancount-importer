@@ -46,3 +46,16 @@ def ofx_load(console, ofx_path):
     except Exception as e:
         console.print(f"[error]Error parsing OFX file: {str(e)}[/]")
         return None
+
+def ofx_pending(txns, beans, account):
+    pending = []
+    for txn in txns:
+        found = False
+        for bean in beans:
+            if 'account' in bean.entry.meta and 'id' in bean.entry.meta:
+                if bean.entry.meta['id'] == txn.id and bean.entry.meta['account'] == account:
+                    found = True
+                    break
+        if not found:
+            pending.append(txn)
+    return pending
