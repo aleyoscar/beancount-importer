@@ -10,7 +10,8 @@ requires-python = ">=3.11"
 dependencies = [
     "typer (>=0.16.0,<0.17.0)",
     "prompt-toolkit (>=3.0.51,<4.0.0)",
-    "ofxparse (>=0.21,<0.22)"
+    "ofxparse (>=0.21,<0.22)",
+    "beancount (>=3.1.0,<4.0.0)"
 ]
 
 [tool.poetry]
