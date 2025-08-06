@@ -7,15 +7,34 @@ from rich.console import Console
 from rich.theme import Theme
 from typing_extensions import Annotated
 
+def period_callback(date_str: str):
+    if not date_str: return date_str
+    error = "Please enter a valid date format for --period (YYYY, YYYY-MM or YYYY-MM-DD)"
+    if not all(c.isdigit() or c == '-' for c in date_str): raise typer.BadParameter(error)
+
+    parts = date_str.split('-')
+    num_parts = len(parts)
+
+    if num_parts not in (1, 2, 3): raise typer.BadParameter(error)
+    if not (parts[0].isdigit() and len(parts[0]) == 4): raise typer.BadParameter(error)
+    if num_parts == 1: return date_str
+    if not (parts[1].isdigit() and len(parts[1]) == 2 and 1 <= int(parts[1]) <= 12): raise typer.BadParameter(error)
+    if num_parts == 2: return date_str
+    if not (parts[2].isdigit() and len(parts[2]) == 2 and 1 <= int(parts[2]) <= 31): raise typer.BadParameter(error)
+
+    return date_str
+
 def bean_import(
     ofx: Annotated[Path, typer.Argument(help="The ofx file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
     ledger: Annotated[Path, typer.Argument(help="The beancount ledger file to base the parser from", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
-    output: Annotated[Path, typer.Option(help="The output file to write to instead of stdout", show_default=False, exists=False)]=None
+    output: Annotated[Path, typer.Option(help="The output file to write to instead of stdout", show_default=False, exists=False)]=None,
+    period: Annotated[str, typer.Option(help="Specify a year, month or day period to parse from the ofx file in the format YYYY, YYYY-MM or YYYY-MM-DD", callback=period_callback)]=""
 ):
     """
     Parse an OFX file based on a beancount LEDGER and output transaction entries to stdout
 
     Optionally specify an --output file
+    Optionally specify a time --period in the format YYYY, YYYY-MM or YYYY-MM-DD
     """
 
     theme = Theme({
@@ -44,6 +63,12 @@ def bean_import(
     console.print(f"Parsed [number]{len(ledger_data['transactions'])}[/] beans from LEDGER file")
 
     # Filter transactions by dates specified from cli
+    if period:
+        filtered = [t for t in ofx_data['transactions'] if t.date.startswith(period)]
+        console.print(f"Found [number]{len(filtered)}[/] transactions within period [number]{period}[/]")
+    else:
+        filtered = ofx_data['transactions']
+    
     # Match transactions not in beans into pending
     # Parse each pending transaction
         # Check if payee in payee file
