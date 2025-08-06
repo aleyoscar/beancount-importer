@@ -1,5 +1,6 @@
 import typer
 from pathlib import Path
+from prompt_toolkit import PromptSession
 from rich.console import Console
 from rich.theme import Theme
 from typing_extensions import Annotated
@@ -22,6 +23,23 @@ def bean_import(
 
     console = Console(theme=theme)
     console_output = f"Parsing: [file]{ofx}[/] with [file]{ledger}[/]"
-    
+
+    session = PromptSession()
+
     if output: console_output +=  f"and outputting to [file]{output}[/]"
     console.print(f"{console_output}")
+
+    # Parse ofx file into transactions
+    # Parse ledger file into beans
+    # Filter transactions by dates specified from cli
+    # Match transactions not in beans into pending
+    # Parse each pending transaction
+        # Check if payee in payee file
+            # YES: replace
+            # NO: Prompt for replacement and update payee file
+        # Loop inserting postings
+            # Add until postings total is equal to transaction amount
+            # Add a final posting
+        # Display final and prompt for edits
+            # Edit selected
+        # Post entry to output (if stdout, save to string)
