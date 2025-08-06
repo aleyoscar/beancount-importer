@@ -1,4 +1,5 @@
 import typer
+from .ofx import ofx_load
 from pathlib import Path
 from prompt_toolkit import PromptSession
 from rich.console import Console
@@ -17,11 +18,15 @@ def bean_import(
     """
 
     theme = Theme({
+        "number": "blue",
+        "date": "yellow",
+        "error": "red",
         "file": "grey50",
-        "error": "red"
+        "string": "green"
     })
 
     console = Console(theme=theme)
+    err_console = Console(theme=theme, stderr=True)
     console_output = f"Parsing: [file]{ofx}[/] with [file]{ledger}[/]"
 
     session = PromptSession()
@@ -30,6 +35,9 @@ def bean_import(
     console.print(f"{console_output}")
 
     # Parse ofx file into transactions
+    ofx_data = ofx_load(err_console, ofx)
+    console.print(f"Parsed [number]{len(ofx_data['transactions'])}[/] transactions from OFX file")
+    
     # Parse ledger file into beans
     # Filter transactions by dates specified from cli
     # Match transactions not in beans into pending
