@@ -1,0 +1,23 @@
+[project]
+name = "bean-import"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "aleyoscar",email = "mail@aleyoscar.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "typer (>=0.16.0,<0.17.0)"
+]
+
+[tool.poetry]
+packages = [{include = "bean_import", from = "src"}]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project.scripts]
+bean-import = "bean_import.cli:app"
