@@ -1,1 +1,5 @@
 __pycache__/
+*.ofx
+*.bean
+*.beancount
+*.ledger
