@@ -39,10 +39,11 @@ def bean_import(
 
     theme = Theme({
         "number": "blue",
-        "date": "yellow",
+        "date": "orange4",
         "error": "red",
         "file": "grey50",
-        "string": "green"
+        "string": "green",
+        "warning": "yellow",
     })
 
     console = Console(theme=theme)
@@ -56,19 +57,31 @@ def bean_import(
 
     # Parse ofx file into ofx_data
     ofx_data = ofx_load(err_console, ofx)
-    console.print(f"Parsed [number]{len(ofx_data['transactions'])}[/] transactions from OFX file")
+    if len(ofx_data['transactions']):
+        console.print(f"Parsed [number]{len(ofx_data['transactions'])}[/] transactions from OFX file")
+    else:
+        err_console.print(f"[warning]No transactions found in OFX file. Exiting.[/]")
+        raise typer.Exit()
 
     # Parse ledger file into ledger_data
     ledger_data = ledger_load(err_console, ledger)
-    console.print(f"Parsed [number]{len(ledger_data['transactions'])}[/] beans from LEDGER file")
+    if len(ledger_data['transactions']):
+        console.print(f"Parsed [number]{len(ledger_data['transactions'])}[/] beans from LEDGER file")
+    else:
+        err_console.print(f"[warning]No transaction entries found in LEDGER file. Exiting.[/]")
+        raise typer.Exit()
 
     # Filter transactions by dates specified from cli
     if period:
         filtered = [t for t in ofx_data['transactions'] if t.date.startswith(period)]
-        console.print(f"Found [number]{len(filtered)}[/] transactions within period [number]{period}[/]")
+        if len(filtered):
+            console.print(f"Found [number]{len(filtered)}[/] transactions within period [date]{period}[/]")
+        else:
+            err_console.print(f"[warning]No transactions found within the specified period [date]{period}[/]. Exiting.[/]")
+            raise typer.Exit()
     else:
         filtered = ofx_data['transactions']
-    
+
     # Match transactions not in beans into pending
     pending = ofx_pending(filtered, ledger_data['transactions'], ofx_data['account_info']['account_id'])
     if len(pending):
