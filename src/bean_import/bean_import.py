@@ -205,9 +205,12 @@ def bean_import(
 
             # Post entry to output (if stdout, save to string)
             if output:
-                append_lines(output, new_bean.print())
+                console_insert = f'[file]{output}[/]'
+                append_lines(err_console, output, new_bean.print())
             else:
+                console_insert = f'[file]buffer[/]'
                 buffer += new_bean.print()
+            console.print(f"...Inserted {new_bean.print_head(theme=True)} into {console_insert}")
         # Skip transaction
         if resolve[0] == "s":
             console.print(f"...Skipping")

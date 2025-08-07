@@ -47,7 +47,7 @@ def replace_lines(console, file_path, new_data, line_start, line_count=1):
 def append_lines(console, file_path, new_data):
     try:
         with open(file_path, 'a', encoding='utf-8') as file:
-            file.write(new_data)
+            file.write(f"\n{new_data}")
         return True
     except Exception as e:
         console.print(f"[error]<<ERROR>> Error inserting lines: {str(e)}[/]")
