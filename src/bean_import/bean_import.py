@@ -28,10 +28,11 @@ def period_callback(date_str: str):
 
     return date_str
 
-def get_posting(type, default_amount, default_currency):
+def get_posting(type, default_amount, default_currency, completer):
     account = prompt(
         f"...{type} account > ",
-        validator=valid_account)
+        validator=valid_account,
+        completer=completer)
     amount = prompt(
         f"...{type} amount > ",
         validator=valid_float,
@@ -91,6 +92,7 @@ def bean_import(
     else:
         err_console.print(f"[warning]No transaction entries found in LEDGER file. Exiting.[/]")
         raise typer.Exit()
+    account_completer = FuzzyCompleter(WordCompleter(ledger_data.accounts, sentence=True))
 
     # Filter transactions by dates specified from cli
     if period:
@@ -190,11 +192,11 @@ def bean_import(
             new_bean = ledger_bean(txn)
             while new_bean.amount < txn.amount:
                 console.print(f"\n{new_bean.print()}")
-                new_bean.add_posting(get_posting("Credit", txn.amount - new_bean.amount, ledger_data.currency))
+                new_bean.add_posting(get_posting("Credit", txn.amount - new_bean.amount, ledger_data.currency, account_completer))
 
             # Add debit posting
             console.print(f"\n{new_bean.print()}")
-            new_bean.add_posting(get_posting("Debit", txn.amount * -1, ledger_data.currency))
+            new_bean.add_posting(get_posting("Debit", txn.amount * -1, ledger_data.currency, account_completer))
 
             # Display final and prompt for edits
             console.print(f"\n{new_bean.print()}")

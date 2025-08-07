@@ -1,5 +1,5 @@
 from beancount import loader
-from beancount.core.data import Transaction, Posting
+from beancount.core.data import Transaction, Posting, Open
 from beancount.core.amount import Amount
 from beancount.parser import printer
 from datetime import datetime
@@ -12,31 +12,12 @@ class Ledger:
         currency = options.get('operating_currency', [])
         self.currency = currency[0] if len(currency) else ''
         self.transactions = [Bean(t) for t in entries if isinstance(t, Transaction)]
+        self.accounts = [o.account for o in entries if isinstance(o, Open)]
         self.errors = [str(err) for err in errors] if errors else []
 
 class Bean:
     def __init__(self, entry):
         self.entry = entry
-        """
-        meta:       dict[str, Any]
-        date:       date
-        flag:       str
-        payee:      Optional[str]
-        narration:  Optional[str]
-        tags:       frozenset[str]
-        links:      frozenset[str]
-        postings:   list[
-            account:    str
-            units:      Optional[Amount[
-                number:     float
-                currency:   str
-            ]]
-            cost:       Union[Cost, CostSpec]
-            price:      Optional[Amount]
-            flag:       Optional[str]
-            meta:       Optional[dict[str, Any]]
-        ]
-        """
         self.amount = 0.0
         self.total()
 
@@ -87,12 +68,6 @@ class Bean:
         if post_i >= 0: self.entry.postings[post_i] = new_post
         else: self.entry.postings.append(new_post)
         self.total()
-    #
-    # def reset_postings(self):
-    #     # self.postings = {}
-    #     self.total()
-
-        # new_entry = Transaction(meta, date, flag, payee, narration, tags, links, postings)
 
 def ledger_load(console, ledger_path):
     try:
