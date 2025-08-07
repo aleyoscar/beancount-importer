@@ -128,14 +128,18 @@ def bean_import(
             console.print(f"...Reconciling")
             txn.payee = replace_payee(payees, txn.payee, console)
         if resolve == "i" or resolve == "insert":
+        # Insert
+        if resolve[0] == "i":
             console.print(f"...Inserting")
-            txn.payee = replace_payee(payees, txn.payee, console)
-        if resolve == "s" or resolve == "skip":
+            # Loop inserting postings
+                # Add until postings total is equal to transaction amount
+                # Add a final posting
+            # Display final and prompt for edits
+                # Edit selected
+            # Post entry to output (if stdout, save to string)
+        if resolve[0] == "s":
             console.print(f"...Skipping")
 
-        # Loop inserting postings
-            # Add until postings total is equal to transaction amount
-            # Add a final posting
-        # Display final and prompt for edits
-            # Edit selected
-        # Post entry to output (if stdout, save to string)
+        if resolve[0] == "q":
+            console.print(f"[warning]Exiting[/]")
+            break
