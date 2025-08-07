@@ -1,7 +1,18 @@
 from beancount import loader
-from beancount.core.data import Transaction
+from beancount.core.data import Transaction, Posting
+from beancount.core.amount import Amount
 from beancount.parser import printer
+from datetime import datetime
 from .helpers import cur
+from decimal import Decimal
+
+class Ledger:
+    def __init__(self, entries, errors, options):
+        self.title = options.get('title', 'Unknown')
+        currency = options.get('operating_currency', [])
+        self.currency = currency[0] if len(currency) else ''
+        self.transactions = [Bean(t) for t in entries if isinstance(t, Transaction)]
+        self.errors = [str(err) for err in errors] if errors else []
 
 class Bean:
     def __init__(self, entry):
@@ -26,7 +37,6 @@ class Bean:
             meta:       Optional[dict[str, Any]]
         ]
         """
-        self.date = entry.date.strftime('%Y-%m-%d')
         self.amount = 0.0
         self.total()
 
@@ -65,10 +75,18 @@ class Bean:
             self.amount += float(posting.units.number) if posting.units and posting.units.number > 0 else 0.0
         # self.remaining = self.limit - self.amount
 
-    # def add_posting(self, amount, account):
-    #     # if account in self.postings: self.postings[account] += float(amount)
-    #     # else: self.postings[account] = float(amount)
-    #     self.total()
+    def add_posting(self, posting):
+        post_i = -1
+        post_amount = Decimal(posting['amount'])
+        for i, post in enumerate(self.entry.postings):
+            if post.account == posting['account']:
+                post_i = i
+                post_amount += post.units.number
+                break
+        new_post = Posting(posting["account"], Amount(post_amount, posting["currency"]), None, None, None, None)
+        if post_i >= 0: self.entry.postings[post_i] = new_post
+        else: self.entry.postings.append(new_post)
+        self.total()
     #
     # def reset_postings(self):
     #     # self.postings = {}
@@ -79,20 +97,13 @@ class Bean:
 def ledger_load(console, ledger_path):
     try:
         entries, errors, options = loader.load_file(ledger_path)
-        account_info = {
-            'title': options.get('title', 'Unknown'),
-            'operating_currency': options.get('operating_currency', [])
-        }
-
-        return {
-            'account_info': account_info,
-            'transactions': [Bean(t) for t in entries if isinstance(t, Transaction)],
-            'errors': [str(err) for err in errors] if errors else []
-        }
-
+        return Ledger(entries, errors, options)
     except FileNotFoundError:
         console.print(f"[error]Error: File {ledger_path} not found[/]")
         return None
     except Exception as e:
         console.print(f"[error]Error parsing Beancount file: {str(e)}[/]")
         return None
+
+def ledger_bean(txn):
+    return Bean(Transaction(None, txn.date, '*', txn.payee, '', [], [], []))

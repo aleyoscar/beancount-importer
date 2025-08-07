@@ -1,8 +1,8 @@
 import typer
-from .helpers import get_key, set_key, get_json_values, replace_lines
-from .ledger import ledger_load
+from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines
+from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load, ofx_pending, ofx_matches
-from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions
+from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
@@ -27,6 +27,19 @@ def period_callback(date_str: str):
     if not (parts[2].isdigit() and len(parts[2]) == 2 and 1 <= int(parts[2]) <= 31): raise typer.BadParameter(error)
 
     return date_str
+
+def get_posting(type, default_amount, default_currency):
+    account = prompt(
+        f"...{type} account > ",
+        validator=valid_account)
+    amount = prompt(
+        f"...{type} amount > ",
+        validator=valid_float,
+        default=cur(default_amount))
+    currency = prompt(
+        f"...{type} currency > ",
+        default=default_currency)
+    return {"account": account, "amount": amount, "currency": currency}
 
 def bean_import(
     ofx: Annotated[Path, typer.Argument(help="The ofx file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
@@ -72,8 +85,9 @@ def bean_import(
 
     # Parse ledger file into ledger_data
     ledger_data = ledger_load(err_console, ledger)
-    if len(ledger_data['transactions']):
-        console.print(f"Parsed [number]{len(ledger_data['transactions'])}[/] beans from LEDGER file")
+    if ledger_data and len(ledger_data.transactions):
+        console.print(f"Parsed [number]{len(ledger_data.transactions)}[/] beans from LEDGER file")
+        console.print(f"Default currency: [answer]{ledger_data.currency}[/]")
     else:
         err_console.print(f"[warning]No transaction entries found in LEDGER file. Exiting.[/]")
         raise typer.Exit()
@@ -90,7 +104,7 @@ def bean_import(
         filtered = ofx_data.transactions
 
     # Match transactions not in beans into pending
-    pending = ofx_pending(filtered, ledger_data['transactions'], ofx_data.account_id)
+    pending = ofx_pending(filtered, ledger_data.transactions, ofx_data.account_id)
     if len(pending):
         console.print(f"Found [number]{len(pending)}[/] transactions not in LEDGER")
     else:
@@ -128,7 +142,7 @@ def bean_import(
         # Reconcile
         if resolve[0] == "r":
             console.print(f"...Reconciling")
-            reconcile_matches = ofx_matches(txn, ledger_data["transactions"])
+            reconcile_matches = ofx_matches(txn, ledger_data.transactions)
 
             # Matches found
             if len(reconcile_matches):
@@ -171,15 +185,37 @@ def bean_import(
         # Insert
         if resolve[0] == "i":
             console.print(f"...Inserting")
-            # Loop inserting postings
-                # Add until postings total is equal to transaction amount
-                # Add a final posting
+
+            # Add credit postings until total is equal to transaction amount
+            new_bean = ledger_bean(txn)
+            while new_bean.amount < txn.amount:
+                console.print(f"\n{new_bean.print()}")
+                new_bean.add_posting(get_posting("Credit", txn.amount - new_bean.amount, ledger_data.currency))
+
+            # Add debit posting
+            console.print(f"\n{new_bean.print()}")
+            new_bean.add_posting(get_posting("Debit", txn.amount * -1, ledger_data.currency))
+
             # Display final and prompt for edits
-                # Edit selected
+            console.print(f"\n{new_bean.print()}")
+
+            # Edit final
+
             # Post entry to output (if stdout, save to string)
+            if output:
+                append_lines(output, new_bean.print())
+            else:
+                buffer += new_bean.print()
+        # Skip transaction
         if resolve[0] == "s":
             console.print(f"...Skipping")
 
+        # Quit
         if resolve[0] == "q":
-            console.print(f"[warning]Exiting[/]")
             break
+
+    # Finished parsing
+    console.print(f"[string]Finished parsing [number]{len(pending)}[/] transactions[/]\n")
+    if not output and buffer:
+        console.print(buffer)
+    console.print(f"[warning]Exiting[/]")

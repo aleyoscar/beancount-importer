@@ -39,6 +39,16 @@ def replace_lines(console, file_path, new_data, line_start, line_count=1):
         new_lines = lines[:line_start - 1] + new_data_arr + lines[line_start + line_count - 1:]
         with open(file_path, 'w', encoding='utf-8') as file:
             file.writelines(new_lines)
+        return True
     except Exception as e:
         console.print(f"[error]<<ERROR>> Error replacing lines: {str(e)}[/]")
+        return False
+
+def append_lines(console, file_path, new_data):
+    try:
+        with open(file_path, 'a', encoding='utf-8') as file:
+            file.write(new_data)
+        return True
+    except Exception as e:
+        console.print(f"[error]<<ERROR>> Error inserting lines: {str(e)}[/]")
         return False
