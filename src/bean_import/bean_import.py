@@ -28,18 +28,6 @@ def period_callback(date_str: str):
 
     return date_str
 
-def replace_payee(payee_path, key, console):
-    payee_completer = FuzzyCompleter(WordCompleter(get_json_values(payee_path), sentence=True))
-    payee = get_key(payee_path, key)
-    if not payee:
-        payee = prompt(f"...Replace '{key}'? > ", key_bindings=cancel_bindings, bottom_toolbar=cancel_toolbar, completer=payee_completer)
-    if payee:
-        console.print(f"...Replaced [string]{key}[/] with [answer]{payee}[/]")
-        set_key(payee_path, key, payee)
-        return payee
-    else:
-        return key
-
 def bean_import(
     ofx: Annotated[Path, typer.Argument(help="The ofx file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
     ledger: Annotated[Path, typer.Argument(help="The beancount ledger file to base the parser from", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
@@ -111,9 +99,32 @@ def bean_import(
         console.print(f"Parsing: {txn.print(theme=True)}")
 
         # Reconcile, Insert, Skip?
-        resolve = prompt(f"...Reconcile, Insert or Skip? > ", bottom_toolbar=resolve_toolbar, validator=resolve_validator).lower()
+        resolve = prompt(
+            f"...Reconcile, Insert or Skip? > ",
+            bottom_toolbar=resolve_toolbar,
+            validator=ValidOptions(['r', 'reconcile', 'i', 'insert', 's', 'skip', 'q', 'quit'])).lower()
 
-        if resolve == "r" or resolve == "reconcile":
+        # Replace payee
+        if resolve[0] == 'r' or resolve[0] == 'i':
+            payee_completer = FuzzyCompleter(WordCompleter(get_json_values(payees), sentence=True))
+            payee = get_key(payees, txn.payee)
+
+            # Payee not found, replace
+            if not payee:
+                payee = prompt(
+                    f"...Replace '{txn.payee}'? > ",
+                    key_bindings=cancel_bindings,
+                    bottom_toolbar=cancel_toolbar,
+                    completer=payee_completer)
+
+            # Payee entered
+            if payee:
+                console.print(f"...Replaced [string]{txn.payee}[/] with [answer]{payee}[/]")
+                set_key(payees, txn.payee, payee)
+                txn.payee = payee
+
+        # Reconcile
+        if resolve[0] == "r":
             console.print(f"...Reconciling")
             txn.payee = replace_payee(payees, txn.payee, console)
         if resolve == "i" or resolve == "insert":
