@@ -2,7 +2,7 @@ import typer
 from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines
 from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load, ofx_pending, ofx_matches
-from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account
+from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
@@ -202,6 +202,51 @@ def bean_import(
             console.print(f"\n{new_bean.print()}")
 
             # Edit final
+            while True:
+                edit_option = prompt(
+                    f"...Edit transaction? > ",
+                    validator=ValidOptions(['d', 'date', 'f', 'flag', 'p', 'payee', 'n', 'narration', 't', 'tags', 'l', 'links', 'o', 'postings', 's', 'save']),
+                    bottom_toolbar=edit_toolbar)
+
+                # Edit date
+                if edit_option[0] == 'd':
+                    console.print(f"...Edit [date]date[/]")
+                    continue
+
+                # Edit flag
+                if edit_option[0] == 'f':
+                    console.print(f"...Edit [flag]flag[/]")
+                    continue
+
+                # Edit payee
+                if edit_option[0] == 'p':
+                    console.print(f"...Edit [string]payee[/]")
+                    continue
+
+                # Edit narration
+                if edit_option[0] == 'n':
+                    console.print(f"...Edit [string]narration[/]")
+                    continue
+
+                # Edit tags
+                if edit_option[0] == 't':
+                    console.print(f"...Edit [file]tags[/]")
+                    continue
+
+                # Edit links
+                if edit_option[0] == 'l':
+                    console.print(f"...Edit [file]links[/]")
+                    continue
+
+                # Edit postings
+                if edit_option[0] == 'o':
+                    console.print(f"...Edit [number]postings[/]")
+                    continue
+
+                # Save and finish
+                if edit_option[0] == 's':
+                    console.print(f"...Finished editing")
+                    break
 
             # Post entry to output (if stdout, save to string)
             if output:

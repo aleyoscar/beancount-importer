@@ -43,3 +43,6 @@ def cancel_toolbar():
 
 def confirm_toolbar():
     return f"[Y]es  [N]o"
+
+def edit_toolbar():
+    return f"[D]ate  [F]lag  [P]ayee  [N]arration  [T]ags  [L]inks  P[O]stings  [S]ave"
