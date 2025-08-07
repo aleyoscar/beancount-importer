@@ -56,14 +56,15 @@ def bean_import(
     console = Console(theme=theme)
     err_console = Console(theme=theme, stderr=True)
     console_output = f"OFX File: [file]{ofx}[/]\nLEDGER File: [file]{ledger}[/]\nPAYEES File: [file]{payees}[/]"
+    buffer = ''
 
     if output: console_output +=  f"\nOUTPUT File: [file]{output}[/]"
     console.print(f"{console_output}")
 
     # Parse ofx file into ofx_data
     ofx_data = ofx_load(err_console, ofx)
-    if len(ofx_data['transactions']):
-        console.print(f"Parsed [number]{len(ofx_data['transactions'])}[/] transactions from OFX file")
+    if ofx_data and len(ofx_data.transactions):
+        console.print(f"Parsed [number]{len(ofx_data.transactions)}[/] transactions from OFX file")
     else:
         err_console.print(f"[warning]No transactions found in OFX file. Exiting.[/]")
         raise typer.Exit()
@@ -78,17 +79,17 @@ def bean_import(
 
     # Filter transactions by dates specified from cli
     if period:
-        filtered = [t for t in ofx_data['transactions'] if t.date.startswith(period)]
+        filtered = [t for t in ofx_data.transactions if t.date.startswith(period)]
         if len(filtered):
             console.print(f"Found [number]{len(filtered)}[/] transactions within period [date]{period}[/]")
         else:
             err_console.print(f"[warning]No transactions found within the specified period [date]{period}[/]. Exiting.[/]")
             raise typer.Exit()
     else:
-        filtered = ofx_data['transactions']
+        filtered = ofx_data.transactions
 
     # Match transactions not in beans into pending
-    pending = ofx_pending(filtered, ledger_data['transactions'], ofx_data['account_info']['account_id'])
+    pending = ofx_pending(filtered, ledger_data['transactions'], ofx_data.account_id)
     if len(pending):
         console.print(f"Found [number]{len(pending)}[/] transactions not in LEDGER")
     else:

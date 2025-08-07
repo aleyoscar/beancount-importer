@@ -2,6 +2,13 @@ from .helpers import cur
 from ofxparse import OfxParser
 from datetime import datetime
 
+class Account:
+    def __init__(self, data):
+        self.account_id = data.account.account_id
+        self.account_type = data.account.account_type
+        self.institution = data.account.institution.organization if data.account.institution else 'Unknown'
+        self.transactions = [Transaction(id=t.id, date=t.date, payee=t.payee, amount=t.amount) for t in data.account.statement.transactions]
+
 class Transaction:
     def __init__(self, id="", date=datetime.today(), payee="", amount=0.0):
         self.id = id
@@ -24,21 +31,7 @@ def ofx_load(console, ofx_path):
         with open(ofx_path, 'r') as file:
             ofx = OfxParser.parse(file)
 
-        # Extract account information
-        account = ofx.account
-        account_info = {
-            'account_id': account.account_id,
-            'account_type': account.account_type,
-            'institution': account.institution.organization if account.institution else 'Unknown'
-        }
-
-        # Extract transactions
-        transactions = [Transaction(id=t.id, date=t.date, payee=t.payee, amount=t.amount) for t in account.statement.transactions]
-
-        return {
-            'account_info': account_info,
-            'transactions': transactions
-        }
+        return Account(ofx)
 
     except FileNotFoundError:
         console.print(f"[error]Error: File {ofx_path} not found.[/]")
