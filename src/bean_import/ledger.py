@@ -3,7 +3,7 @@ from beancount.core.data import Transaction, Posting, Open
 from beancount.core.amount import Amount
 from beancount.parser import printer
 from datetime import datetime
-from .helpers import cur
+from .helpers import cur, del_spaces
 from decimal import Decimal
 
 class Ledger:
@@ -37,8 +37,8 @@ class Bean:
             narration = f'"{self.entry.narration}"'
         tags = self.print_tags()
         links = self.print_links()
-        if theme: return f'[date]{self.entry.date}[/] [flag]{self.entry.flag}[/] [string]{payee}[/] [string]{narration}[/] [file]{tags}[/] [file]{links}[/] [number]{cur(self.amount)}[/]'.strip()
-        else: return f'{self.entry.date} {self.entry.flag} {payee} {narration} {tags} {links} {cur(self.amount)}'.strip()
+        if theme: return del_spaces(f'[date]{self.entry.date}[/] [flag]{self.entry.flag}[/] [string]{payee}[/] [string]{narration}[/] [file]{tags}[/] [file]{links}[/] [number]{cur(self.amount)}[/]'.strip())
+        else: return del_spaces(f'{self.entry.date} {self.entry.flag} {payee} {narration} {tags} {links} {cur(self.amount)}'.strip())
 
     def print_tags(self):
         tags = ''

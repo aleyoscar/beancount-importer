@@ -1,4 +1,4 @@
-import json, os
+import json, os, re
 
 def cur(num): return '{:.2f}'.format(float(num))
 
@@ -52,3 +52,6 @@ def append_lines(console, file_path, new_data):
     except Exception as e:
         console.print(f"[error]<<ERROR>> Error inserting lines: {str(e)}[/]")
         return False
+
+def del_spaces(text):
+    return re.sub(' +', ' ', text)
