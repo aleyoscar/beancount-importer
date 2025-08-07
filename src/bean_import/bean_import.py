@@ -2,7 +2,7 @@ import typer
 from .helpers import get_key, set_key, get_json_values, replace_lines
 from .ledger import ledger_load
 from .ofx import ofx_load, ofx_pending, ofx_matches
-from .prompts import resolve_toolbar, resolve_validator, cancel_bindings, cancel_toolbar, confirm_toolbar, confirm_validator, ValidOptions
+from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
