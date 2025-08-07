@@ -69,6 +69,18 @@ class Bean:
         else: self.entry.postings.append(new_post)
         self.total()
 
+    def update(self, meta=None, date=None, flag=None, payee=None, narration=None, tags=None, links=None, postings=None):
+        if meta is None: meta = self.entry.meta
+        if date is None: date = self.entry.date
+        if flag is None: flag = self.entry.flag
+        if payee is None: payee = self.entry.payee
+        if narration is None: narration = self.entry.narration
+        if tags is None: tags = self.entry.tags
+        if links is None: links = self.entry.links
+        if postings is None: postings = self.entry.postings
+        self.entry = Transaction(meta, date, flag, payee, narration, tags, links, postings)
+        self.total()
+
 def ledger_load(console, ledger_path):
     try:
         entries, errors, options = loader.load_file(ledger_path)

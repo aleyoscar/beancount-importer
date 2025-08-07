@@ -1,3 +1,4 @@
+from datetime import datetime
 from prompt_toolkit.application import run_in_terminal
 from prompt_toolkit.key_binding import KeyBindings
 from prompt_toolkit.validation import Validator, ValidationError
@@ -22,8 +23,19 @@ def is_float(text):
 def is_account(text):
     return bool(re.match(r"^(Assets|Liabilities|Capital|Income|Expenses):[A-Z][A-Za-z0-9-]*(:[A-Z][A-Za-z0-9-]*)*$", text))
 
+def is_date(text):
+    if not re.match(r'^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$', text):
+        return False
+    try:
+        year, month, day = map(int, text.split('-'))
+        datetime(year, month, day)
+        return True
+    except ValueError:
+        return False
+
 valid_float = Validator.from_callable(is_float, error_message="Not a valid number", move_cursor_to_end=True)
 valid_account = Validator.from_callable(is_account, error_message="Not a valid account", move_cursor_to_end=True)
+valid_date = Validator.from_callable(is_date, error_message="Not a valid date", move_cursor_to_end=True)
 
 cancel_bindings = KeyBindings()
 

@@ -2,7 +2,7 @@ import typer
 from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines
 from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load, ofx_pending, ofx_matches
-from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar
+from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar, valid_date
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
@@ -198,11 +198,9 @@ def bean_import(
             console.print(f"\n{new_bean.print()}")
             new_bean.add_posting(get_posting("Debit", txn.amount * -1, ledger_data.currency, account_completer))
 
-            # Display final and prompt for edits
-            console.print(f"\n{new_bean.print()}")
-
             # Edit final
             while True:
+                console.print(f"\n{new_bean.print()}")
                 edit_option = prompt(
                     f"...Edit transaction? > ",
                     validator=ValidOptions(['d', 'date', 'f', 'flag', 'p', 'payee', 'n', 'narration', 't', 'tags', 'l', 'links', 'o', 'postings', 's', 'save']),
@@ -210,7 +208,13 @@ def bean_import(
 
                 # Edit date
                 if edit_option[0] == 'd':
-                    console.print(f"...Edit [date]date[/]")
+                    edit_date = prompt(
+                        f"...Enter a new date (YYYY-MM-DD) > ",
+                        validator=valid_date,
+                        key_bindings=cancel_bindings,
+                        bottom_toolbar=cancel_toolbar)
+                    if edit_date:
+                        new_bean.update(date=edit_date)
                     continue
 
                 # Edit flag
