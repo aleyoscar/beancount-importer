@@ -37,8 +37,8 @@ class Bean:
             narration = f'"{self.entry.narration}"'
         tags = self.print_tags()
         links = self.print_links()
-        if theme: return f'[date]{self.date}[/] [flag]{self.entry.flag}[/] [string]{payee}[/] [string]{narration}[/] [file]{tags}[/] [file]{links}[/] [number]{cur(self.amount)}[/]'.strip()
-        else: return f'{self.date} {self.entry.flag} {payee} {narration} {tags} {links} {cur(self.amount)}'.strip()
+        if theme: return f'[date]{self.entry.date}[/] [flag]{self.entry.flag}[/] [string]{payee}[/] [string]{narration}[/] [file]{tags}[/] [file]{links}[/] [number]{cur(self.amount)}[/]'.strip()
+        else: return f'{self.entry.date} {self.entry.flag} {payee} {narration} {tags} {links} {cur(self.amount)}'.strip()
 
     def print_tags(self):
         tags = ''
