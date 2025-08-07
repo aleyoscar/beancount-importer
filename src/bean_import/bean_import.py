@@ -1,8 +1,8 @@
 import typer
-from .helpers import get_key, set_key, get_json_values
+from .helpers import get_key, set_key, get_json_values, replace_lines
 from .ledger import ledger_load
-from .ofx import ofx_load, ofx_pending
-from .prompts import resolve_toolbar, resolve_validator, cancel_bindings, cancel_toolbar
+from .ofx import ofx_load, ofx_pending, ofx_matches
+from .prompts import resolve_toolbar, resolve_validator, cancel_bindings, cancel_toolbar, confirm_toolbar, confirm_validator, ValidOptions
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
@@ -46,6 +46,7 @@ def bean_import(
     theme = Theme({
         "number": "blue",
         "date": "orange4",
+        "flag": "magenta",
         "error": "red",
         "file": "grey50",
         "string": "green",
@@ -127,8 +128,46 @@ def bean_import(
         # Reconcile
         if resolve[0] == "r":
             console.print(f"...Reconciling")
-            txn.payee = replace_payee(payees, txn.payee, console)
-        if resolve == "i" or resolve == "insert":
+            reconcile_matches = ofx_matches(txn, ledger_data["transactions"])
+
+            # Matches found
+            if len(reconcile_matches):
+                console.print(f"...Found matches:\n")
+                for i, match in enumerate(reconcile_matches):
+                    console.print(f"   [{i}] {match.print_head(theme=True)}")
+                if len(reconcile_matches) == 1:
+                    match_range = '[0]'
+                else:
+                    match_range = f'[0-{len(reconcile_matches) - 1}]'
+                reconcile_match = prompt(
+                    f"\n...Select match {match_range} > ",
+                    bottom_toolbar=cancel_toolbar,
+                    key_bindings=cancel_bindings,
+                    validator=ValidOptions([str(n) for n in range(len(reconcile_matches))]),
+                    default="0")
+                if reconcile_match:
+                    bean_reconcile = reconcile_matches[int(reconcile_match)]
+                    bean_linecount = len(bean_reconcile.print().strip().split('\n'))
+                    console.print(f"...Reconciling {bean_reconcile.print_head(theme=True)}\n")
+                    bean_reconcile.entry.meta.update({'account': ofx_data.account_id, 'id': txn.id})
+                    replace_lines(
+                        err_console,
+                        bean_reconcile.entry.meta['filename'],
+                        bean_reconcile.print().strip(),
+                        bean_reconcile.entry.meta['lineno'],
+                        bean_linecount)
+                    console.print(bean_reconcile.print())
+
+            # No matches found
+            else:
+                reconcile_insert = prompt(
+                    f"...No matching transactions found. Would you like to insert instead? [Y/n] > ",
+                    default='y',
+                    bottom_toolbar=confirm_toolbar,
+                    validator=ValidOptions(['y', 'n'])).lower()
+                if reconcile_insert == 'y': resolve = 'i'
+                else: resolve = 's'
+
         # Insert
         if resolve[0] == "i":
             console.print(f"...Inserting")

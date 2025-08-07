@@ -1,6 +1,7 @@
 from beancount import loader
 from beancount.core.data import Transaction
 from beancount.parser import printer
+from .helpers import cur
 
 class Bean:
     def __init__(self, entry):
@@ -26,7 +27,8 @@ class Bean:
         ]
         """
         self.date = entry.date.strftime('%Y-%m-%d')
-        # self.total = self.get_total()
+        self.amount = 0.0
+        self.total()
 
     def __str__(self):
         return printer.format_entry(self.entry)
@@ -34,17 +36,34 @@ class Bean:
     def print(self):
         return self.__str__()
 
-    # def print_head(self, theme=False):
-    #     if theme: return f'{self.date} {self.entry.flag} {self.entry.payee} {self.entry.narration}'.strip()
-    #     else: return f'{self.date} {self.entry.flag} "{self.entry.payee}" "{self.entry.narration}"'
+    def print_head(self, theme=False):
+        payee = ''
+        narration = ''
+        if self.entry.payee:
+            payee = f'"{self.entry.payee}"'
+            narration = '""'
+        if self.entry.narration:
+            narration = f'"{self.entry.narration}"'
+        tags = self.print_tags()
+        links = self.print_links()
+        if theme: return f'[date]{self.date}[/] [flag]{self.entry.flag}[/] [string]{payee}[/] [string]{narration}[/] [file]{tags}[/] [file]{links}[/] [number]{cur(self.amount)}[/]'.strip()
+        else: return f'{self.date} {self.entry.flag} {payee} {narration} {tags} {links} {cur(self.amount)}'.strip()
 
-    # def print_tags(self):
+    def print_tags(self):
+        tags = ''
+        for tag in self.entry.tags: tags += f' #{tag}'
+        return tags
 
-    # def get_total(self):
-    #     self.amount = 0.0
-    #     for posting in self.entry.postings:
-    #         self.amount += float(posting.units.number) if posting.units else 0.0
-    #     self.remaining = self.limit - self.amount
+    def print_links(self):
+        links = ''
+        for link in self.entry.links: links += f' ^{link}'
+        return links
+
+    def total(self):
+        self.amount = 0.0
+        for posting in self.entry.postings:
+            self.amount += float(posting.units.number) if posting.units and posting.units.number > 0 else 0.0
+        # self.remaining = self.limit - self.amount
 
     # def add_posting(self, amount, account):
     #     # if account in self.postings: self.postings[account] += float(amount)

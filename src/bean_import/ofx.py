@@ -52,3 +52,10 @@ def ofx_pending(txns, beans, account):
         if not found:
             pending.append(txn)
     return pending
+
+def ofx_matches(txn, beans):
+    matches = []
+    for bean in beans:
+        if bean.amount == txn.amount and 'account' not in bean.entry.meta and 'id' not in bean.entry.meta:
+            matches.append(bean)
+    return matches

@@ -30,3 +30,15 @@ def get_json(json_path):
 
 def get_json_values(json_path):
     return list(get_json(json_path).values())
+
+def replace_lines(console, file_path, new_data, line_start, line_count=1):
+    new_data_arr = [l + '\n' for l in new_data.split('\n')]
+    try:
+        with open(file_path, 'r', encoding='utf-8') as file:
+            lines = file.readlines()
+        new_lines = lines[:line_start - 1] + new_data_arr + lines[line_start + line_count - 1:]
+        with open(file_path, 'w', encoding='utf-8') as file:
+            file.writelines(new_lines)
+    except Exception as e:
+        console.print(f"[error]<<ERROR>> Error replacing lines: {str(e)}[/]")
+        return False
