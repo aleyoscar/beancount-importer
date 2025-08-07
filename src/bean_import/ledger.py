@@ -80,5 +80,5 @@ def ledger_load(console, ledger_path):
         console.print(f"[error]Error parsing Beancount file: {str(e)}[/]")
         return None
 
-def ledger_bean(txn):
-    return Bean(Transaction(None, txn.date, '*', txn.payee, '', [], [], []))
+def ledger_bean(txn, account_id):
+    return Bean(Transaction({"account": account_id, "id": txn.id}, txn.date, '*', txn.payee, '', [], [], []))

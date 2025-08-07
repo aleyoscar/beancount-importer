@@ -189,7 +189,7 @@ def bean_import(
             console.print(f"...Inserting")
 
             # Add credit postings until total is equal to transaction amount
-            new_bean = ledger_bean(txn)
+            new_bean = ledger_bean(txn, ofx_data.account_id)
             while new_bean.amount < txn.amount:
                 console.print(f"\n{new_bean.print()}")
                 new_bean.add_posting(get_posting("Credit", txn.amount - new_bean.amount, ledger_data.currency, account_completer))
