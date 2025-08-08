@@ -113,6 +113,8 @@ def bean_import(
         err_console.print(f"[warning]No pending transactions found. Exiting.[/]")
 
     # Parse each pending transaction
+    reconcile_count = 0
+    insert_count = 0
     for txn in pending:
         console.print(f"Parsing: {txn.print(theme=True)}")
 
@@ -173,6 +175,7 @@ def bean_import(
                         bean_reconcile.entry.meta['lineno'],
                         bean_linecount)
                     console.print(bean_reconcile.print())
+                    reconcile_count += 1
 
             # No matches found
             else:
@@ -271,6 +274,7 @@ def bean_import(
                 console_insert = f'[file]buffer[/]'
                 buffer += new_bean.print()
             console.print(f"...Inserted {new_bean.print_head(theme=True)} into {console_insert}")
+            insert_count += 1
         # Skip transaction
         if resolve[0] == "s":
             console.print(f"...Skipping")
@@ -282,5 +286,11 @@ def bean_import(
     # Finished parsing
     if not output and buffer:
         console.print(f"\n{buffer}")
-    console.print(f"[string]Finished parsing [number]{len(pending)}[/] transactions[/]")
-    console.print(f"[warning]Exiting[/]")
+    if reconcile_count:
+        console.print(f"[string]Reconciled [number]{reconcile_count}[/] transactions[/]")
+    if insert_count:
+        console.print(f"[string]Inserted [number]{insert_count}[/] transactions[/]")
+    skipped = len(pending) - reconcile_count - insert_count
+    if skipped:
+        console.print(f"[string]Skipped [number]{skipped}[/] transactions[/]")
+    console.print(f"[warning]Finished parsing. Exiting[/]")
