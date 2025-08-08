@@ -254,7 +254,7 @@ def bean_import(
                 # Edit tags
                 if edit_option[0] == 't':
                     edit_tags = prompt(
-                        f"...Enter a list of tags separate by spaces > ",
+                        f"...Enter a list of tags separated by spaces > ",
                         key_bindings=cancel_bindings,
                         bottom_toolbar=cancel_toolbar,
                         validator=valid_link_tag,
