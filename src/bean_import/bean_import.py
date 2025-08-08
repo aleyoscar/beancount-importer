@@ -243,7 +243,12 @@ def bean_import(
 
                 # Edit narration
                 if edit_option[0] == 'n':
-                    console.print(f"...Edit [string]narration[/]")
+                    edit_narration = prompt(
+                        f"...Enter new narration > ",
+                        key_bindings=cancel_bindings,
+                        bottom_toolbar=cancel_toolbar)
+                    if edit_narration:
+                        new_bean.update(narration=edit_narration)
                     continue
 
                 # Edit tags
