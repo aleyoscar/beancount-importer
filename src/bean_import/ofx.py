@@ -1,6 +1,7 @@
-from .helpers import cur
+from .helpers import cur, dec
 from ofxparse import OfxParser
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 
 class Account:
     def __init__(self, data):
@@ -57,6 +58,11 @@ def ofx_pending(txns, beans, account):
 def ofx_matches(txn, beans):
     matches = []
     for bean in beans:
-        if bean.amount == txn.abs_amount and 'account' not in bean.entry.meta and 'id' not in bean.entry.meta:
-            matches.append(bean)
+        if 'account' not in bean.entry.meta and 'id' not in bean.entry.meta:
+            if dec(bean.amount) == dec(txn.abs_amount):
+                matches.append(bean)
+            else:
+                for post in bean.entry.postings:
+                    if abs(post.units.number) == dec(txn.abs_amount):
+                        matches.append(bean)
     return matches
