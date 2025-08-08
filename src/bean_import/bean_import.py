@@ -28,7 +28,7 @@ def period_callback(date_str: str):
 
     return date_str
 
-def get_posting(type, default_amount, default_currency, completer):
+def get_posting(type, default_amount, default_currency, op_cur, completer):
     account = prompt(
         f"...{type} account > ",
         validator=valid_account,
@@ -37,24 +37,29 @@ def get_posting(type, default_amount, default_currency, completer):
         f"...{type} amount > ",
         validator=valid_float,
         default=cur(default_amount))
-    currency = prompt(
-        f"...{type} currency > ",
-        default=default_currency)
+    if not op_cur:
+        currency = prompt(
+            f"...{type} currency > ",
+            default=default_currency)
+    else:
+        currency = default_currency
     return {"account": account, "amount": amount, "currency": currency}
 
 def bean_import(
     ofx: Annotated[Path, typer.Argument(help="The ofx file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
     ledger: Annotated[Path, typer.Argument(help="The beancount ledger file to base the parser from", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
-    output: Annotated[Path, typer.Option(help="The output file to write to instead of stdout", show_default=False, exists=False)]=None,
-    period: Annotated[str, typer.Option(help="Specify a year, month or day period to parse from the ofx file in the format YYYY, YYYY-MM or YYYY-MM-DD", callback=period_callback)]="",
-    payees: Annotated[Path, typer.Option(help="The payee file to use for name substitutions", exists=False)]="payees.json"
+    output: Annotated[Path, typer.Option("--output", "-o", help="The output file to write to instead of stdout", show_default=False, exists=False)]=None,
+    period: Annotated[str, typer.Option("--period", "-d", help="Specify a year, month or day period to parse from the ofx file in the format YYYY, YYYY-MM or YYYY-MM-DD", callback=period_callback)]="",
+    payees: Annotated[Path, typer.Option("--payees", "-p", help="The payee file to use for name substitutions", exists=False)]="payees.json",
+    operating_currency: Annotated[bool, typer.Option("--operating_currency", "-c", help="Skip the currency prompt when inserting and use the ledger's operating_currency", )]=False
 ):
     """
     Parse an OFX file based on a beancount LEDGER and output transaction entries to stdout
 
-    Optionally specify an --output file
-    Optionally specify a time --period in the format YYYY, YYYY-MM or YYYY-MM-DD
-    Optionally specify a --payees json file to use for payee name substitutions
+    Optionally specify an --output file.
+    Optionally specify a time --period in the format YYYY, YYYY-MM or YYYY-MM-DD.
+    Optionally specify a --payees json file to use for payee name substitutions.
+    Optionally skip the currency prompt when inserting and use the ledger's --operating-currency.
     """
 
     theme = Theme({
@@ -197,11 +202,11 @@ def bean_import(
             new_bean = ledger_bean(txn, ofx_data.account_id)
             while new_bean.amount < txn.abs_amount:
                 console.print(f"\n{new_bean.print()}")
-                new_bean.add_posting(get_posting("Credit", txn.abs_amount - new_bean.amount, ledger_data.currency, account_completer))
+                new_bean.add_posting(get_posting("Credit", txn.abs_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer))
 
             # Add debit posting
             console.print(f"\n{new_bean.print()}")
-            new_bean.add_posting(get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, account_completer))
+            new_bean.add_posting(get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, operating_currency, account_completer))
 
             # Edit final
             while True:
@@ -284,9 +289,9 @@ def bean_import(
                     new_bean.update(postings=[])
                     while new_bean.amount < txn.abs_amount:
                         console.print(f"\n{new_bean.print()}")
-                        new_bean.add_posting(get_posting("Credit", txn.abs_amount - new_bean.amount, ledger_data.currency, account_completer))
+                        new_bean.add_posting(get_posting("Credit", txn.abs_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer))
                     console.print(f"\n{new_bean.print()}")
-                    new_bean.add_posting(get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, account_completer))
+                    new_bean.add_posting(get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, operating_currency, account_completer))
                     continue
 
                 # Save and finish
