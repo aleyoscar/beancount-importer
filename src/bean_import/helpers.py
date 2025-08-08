@@ -16,7 +16,7 @@ def set_key(json_path, key, value):
     set_json(data, json_path)
 
 def set_json(data, json_path):
-    with open(json_path, 'w') as file:
+    with open(json_path, 'w', encoding='utf-8', newline='\n') as file:
         json.dump(data, file, indent=4, sort_keys=True, ensure_ascii=False)
 
 def get_json(json_path):
@@ -40,7 +40,7 @@ def replace_lines(console, file_path, new_data, line_start, line_count=1):
         with open(file_path, 'r', encoding='utf-8') as file:
             lines = file.readlines()
         new_lines = lines[:line_start - 1] + new_data_arr + lines[line_start + line_count - 1:]
-        with open(file_path, 'w', encoding='utf-8') as file:
+        with open(file_path, 'w', encoding='utf-8', newline='\n') as file:
             file.writelines(new_lines)
         return True
     except Exception as e:
@@ -49,7 +49,7 @@ def replace_lines(console, file_path, new_data, line_start, line_count=1):
 
 def append_lines(console, file_path, new_data):
     try:
-        with open(file_path, 'a', encoding='utf-8') as file:
+        with open(file_path, 'a', encoding='utf-8', newline='\n') as file:
             file.write(f"\n{new_data}")
         return True
     except Exception as e:
