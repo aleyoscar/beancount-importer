@@ -125,6 +125,12 @@ def bean_import(
     for txn in pending:
         console.print(f"Parsing: {txn.print(theme=True)}")
 
+        # Update ledger data for every transaction
+        ledger_data = ledger_load(err_console, ledger)
+        account_completer = FuzzyCompleter(WordCompleter(ledger_data.accounts, sentence=True))
+        tags_completer = FuzzyCompleter(WordCompleter(ledger_data.tags))
+        links_completer = FuzzyCompleter(WordCompleter(ledger_data.links))
+
         # Reconcile, Insert, Skip?
         resolve = prompt(
             f"...Reconcile, Insert or Skip? > ",
