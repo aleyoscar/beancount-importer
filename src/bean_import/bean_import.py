@@ -196,7 +196,7 @@ def bean_import(
 
             # Add debit posting
             console.print(f"\n{new_bean.print()}")
-            new_bean.add_posting(get_posting("Debit", txn.amount * -1, ledger_data.currency, account_completer))
+            new_bean.add_posting(get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, account_completer))
 
             # Edit final
             while True:
