@@ -219,7 +219,13 @@ def bean_import(
 
                 # Edit flag
                 if edit_option[0] == 'f':
-                    console.print(f"...Edit [flag]flag[/]")
+                    edit_flag = prompt(
+                        f"...Enter a new flag [!/*] > ",
+                        validator=ValidOptions(['*', '!']),
+                        key_bindings=cancel_bindings,
+                        bottom_toolbar=cancel_toolbar)
+                    if edit_flag:
+                        new_bean.update(flag=edit_flag)
                     continue
 
                 # Edit payee
