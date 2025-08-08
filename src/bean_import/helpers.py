@@ -55,3 +55,6 @@ def append_lines(console, file_path, new_data):
 
 def del_spaces(text):
     return re.sub(' +', ' ', text)
+
+def set_from_sets(arr):
+    return sorted(set().union(*arr))

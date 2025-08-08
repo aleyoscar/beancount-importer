@@ -93,6 +93,8 @@ def bean_import(
         err_console.print(f"[warning]No transaction entries found in LEDGER file. Exiting.[/]")
         raise typer.Exit()
     account_completer = FuzzyCompleter(WordCompleter(ledger_data.accounts, sentence=True))
+    tags_completer = FuzzyCompleter(WordCompleter(ledger_data.tags))
+    links_completer = FuzzyCompleter(WordCompleter(ledger_data.links))
 
     # Filter transactions by dates specified from cli
     if period:
@@ -258,6 +260,7 @@ def bean_import(
                         key_bindings=cancel_bindings,
                         bottom_toolbar=cancel_toolbar,
                         validator=valid_link_tag,
+                        completer=tags_completer,
                         default=" ".join(new_bean.entry.tags))
                     if edit_tags:
                         new_bean.update(tags=set(edit_tags.split()))
@@ -270,6 +273,7 @@ def bean_import(
                         key_bindings=cancel_bindings,
                         bottom_toolbar=cancel_toolbar,
                         validator=valid_link_tag,
+                        completer=links_completer,
                         default=" ".join(new_bean.entry.links))
                     if edit_links:
                         new_bean.update(links=set(edit_links.split()))

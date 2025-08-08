@@ -3,7 +3,7 @@ from beancount.core.data import Transaction, Posting, Open
 from beancount.core.amount import Amount
 from beancount.parser import printer
 from datetime import datetime
-from .helpers import cur, del_spaces
+from .helpers import cur, del_spaces, set_from_sets
 from decimal import Decimal
 
 class Ledger:
@@ -13,6 +13,8 @@ class Ledger:
         self.currency = currency[0] if len(currency) else ''
         self.transactions = [Bean(t) for t in entries if isinstance(t, Transaction)]
         self.accounts = [o.account for o in entries if isinstance(o, Open)]
+        self.tags = set_from_sets([t.tags for t in entries if isinstance(t, Transaction)])
+        self.links = set_from_sets([t.links for t in entries if isinstance(t, Transaction)])
         self.errors = [str(err) for err in errors] if errors else []
 
 class Bean:
