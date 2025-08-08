@@ -33,9 +33,16 @@ def is_date(text):
     except ValueError:
         return False
 
+def is_link_tag(text):
+    for t in text.split():
+        if not re.fullmatch(r'[a-zA-Z][a-zA-Z0-9_-]*', t):
+            return False
+    return True
+
 valid_float = Validator.from_callable(is_float, error_message="Not a valid number", move_cursor_to_end=True)
 valid_account = Validator.from_callable(is_account, error_message="Not a valid account", move_cursor_to_end=True)
 valid_date = Validator.from_callable(is_date, error_message="Not a valid date", move_cursor_to_end=True)
+valid_link_tag = Validator.from_callable(is_link_tag, error_message="Not a valid link or tag", move_cursor_to_end=True)
 
 cancel_bindings = KeyBindings()
 

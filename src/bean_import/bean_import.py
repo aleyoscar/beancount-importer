@@ -2,7 +2,7 @@ import typer
 from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines
 from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load, ofx_pending, ofx_matches
-from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar, valid_date
+from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar, valid_date, valid_link_tag
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
@@ -253,7 +253,14 @@ def bean_import(
 
                 # Edit tags
                 if edit_option[0] == 't':
-                    console.print(f"...Edit [file]tags[/]")
+                    edit_tags = prompt(
+                        f"...Enter a list of tags separate by spaces > ",
+                        key_bindings=cancel_bindings,
+                        bottom_toolbar=cancel_toolbar,
+                        validator=valid_link_tag,
+                        default=" ".join(new_bean.entry.tags))
+                    if edit_tags:
+                        new_bean.update(tags=set(edit_tags.split()))
                     continue
 
                 # Edit links
