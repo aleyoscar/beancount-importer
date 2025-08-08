@@ -265,7 +265,14 @@ def bean_import(
 
                 # Edit links
                 if edit_option[0] == 'l':
-                    console.print(f"...Edit [file]links[/]")
+                    edit_links = prompt(
+                        f"...Enter a list of links separated by spaces > ",
+                        key_bindings=cancel_bindings,
+                        bottom_toolbar=cancel_toolbar,
+                        validator=valid_link_tag,
+                        default=" ".join(new_bean.entry.links))
+                    if edit_links:
+                        new_bean.update(links=set(edit_links.split()))
                     continue
 
                 # Edit postings
