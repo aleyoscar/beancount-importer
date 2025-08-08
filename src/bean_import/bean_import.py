@@ -230,7 +230,12 @@ def bean_import(
 
                 # Edit payee
                 if edit_option[0] == 'p':
-                    console.print(f"...Edit [string]payee[/]")
+                    edit_payee = prompt(
+                        f"...Enter new payee > ",
+                        key_bindings=cancel_bindings,
+                        bottom_toolbar=cancel_toolbar)
+                    if edit_payee:
+                        new_bean.update(payee=edit_payee)
                     continue
 
                 # Edit narration
