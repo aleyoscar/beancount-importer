@@ -277,7 +277,12 @@ def bean_import(
 
                 # Edit postings
                 if edit_option[0] == 'o':
-                    console.print(f"...Edit [number]postings[/]")
+                    new_bean.update(postings=[])
+                    while new_bean.amount < txn.abs_amount:
+                        console.print(f"\n{new_bean.print()}")
+                        new_bean.add_posting(get_posting("Credit", txn.abs_amount - new_bean.amount, ledger_data.currency, account_completer))
+                    console.print(f"\n{new_bean.print()}")
+                    new_bean.add_posting(get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, account_completer))
                     continue
 
                 # Save and finish
