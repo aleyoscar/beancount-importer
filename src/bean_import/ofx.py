@@ -16,6 +16,7 @@ class Transaction:
         self.payee = payee
 
         self.amount = float(amount)
+        self.abs_amount = abs(self.amount)
         self.year = int(self.date.split('-')[0])
 
     def __str__(self):
@@ -56,6 +57,6 @@ def ofx_pending(txns, beans, account):
 def ofx_matches(txn, beans):
     matches = []
     for bean in beans:
-        if bean.amount == txn.amount and 'account' not in bean.entry.meta and 'id' not in bean.entry.meta:
+        if bean.amount == txn.abs_amount and 'account' not in bean.entry.meta and 'id' not in bean.entry.meta:
             matches.append(bean)
     return matches
