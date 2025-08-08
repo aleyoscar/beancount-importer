@@ -305,7 +305,7 @@ def bean_import(
                 append_lines(err_console, output, new_bean.print())
             else:
                 console_insert = f'[file]buffer[/]'
-                buffer += new_bean.print()
+                buffer += f"\n{new_bean.print()}"
             console.print(f"...Inserted {new_bean.print_head(theme=True)} into {console_insert}")
             insert_count += 1
         # Skip transaction
@@ -318,7 +318,7 @@ def bean_import(
 
     # Finished parsing
     if not output and buffer:
-        console.print(f"\n{buffer}")
+        console.print(f"{buffer}")
     if reconcile_count:
         console.print(f"[string]Reconciled [number]{reconcile_count}[/] transactions[/]")
     if insert_count:
