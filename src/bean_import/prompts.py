@@ -21,10 +21,10 @@ def is_float(text):
         return False
 
 def is_account(text):
-    return bool(re.match(r"^(Assets|Liabilities|Capital|Income|Expenses):[A-Z][A-Za-z0-9-]*(:[A-Z][A-Za-z0-9-]*)*$", text))
+    return bool(re.fullmatch(r"^(Assets|Liabilities|Capital|Income|Expenses):[A-Z][A-Za-z0-9-]*(:[A-Z][A-Za-z0-9-]*)*$", text))
 
 def is_date(text):
-    if not re.match(r'^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$', text):
+    if not re.fullmatch(r'^(?!0000)[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$', text):
         return False
     try:
         year, month, day = map(int, text.split('-'))
