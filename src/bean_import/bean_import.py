@@ -275,7 +275,7 @@ def bean_import(
             break
 
     # Finished parsing
-    console.print(f"[string]Finished parsing [number]{len(pending)}[/] transactions[/]\n")
     if not output and buffer:
-        console.print(buffer)
+        console.print(f"\n{buffer}")
+    console.print(f"[string]Finished parsing [number]{len(pending)}[/] transactions[/]")
     console.print(f"[warning]Exiting[/]")
