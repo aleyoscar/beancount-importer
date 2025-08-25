@@ -2,7 +2,7 @@ import typer
 from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines
 from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load, ofx_pending, ofx_matches
-from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar, valid_date, valid_link_tag
+from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar, valid_date, valid_link_tag, is_account
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
@@ -28,6 +28,11 @@ def period_callback(date_str: str):
 
     return date_str
 
+def account_callback(acct_str: str):
+    if not acct_str: return acct_str
+    if not is_account(acct_str): raise typer.BadParameter("Please enter a valid beancount account, EX: 'Assets:Savings'")
+    return acct_str
+
 def get_posting(type, default_amount, default_currency, op_cur, completer):
     account = prompt(
         f"...{type} account > ",
@@ -50,6 +55,7 @@ def bean_import(
     ledger: Annotated[Path, typer.Argument(help="The beancount ledger file to base the parser from", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
     output: Annotated[Path, typer.Option("--output", "-o", help="The output file to write to instead of stdout", show_default=False, exists=False)]=None,
     period: Annotated[str, typer.Option("--period", "-d", help="Specify a year, month or day period to parse from the ofx file in the format YYYY, YYYY-MM or YYYY-MM-DD", callback=period_callback)]="",
+    account: Annotated[str, typer.Option("--account", "-a", help="Specify the account the ofx file belongs to", callback=account_callback)]="",
     payees: Annotated[Path, typer.Option("--payees", "-p", help="The payee file to use for name substitutions", exists=False)]="payees.json",
     operating_currency: Annotated[bool, typer.Option("--operating_currency", "-c", help="Skip the currency prompt when inserting and use the ledger's operating_currency", )]=False
 ):
@@ -58,6 +64,7 @@ def bean_import(
 
     Optionally specify an --output file.
     Optionally specify a time --period in the format YYYY, YYYY-MM or YYYY-MM-DD.
+    Optionally specify a the --account the ofx file belongs to.
     Optionally specify a --payees json file to use for payee name substitutions.
     Optionally skip the currency prompt when inserting and use the ledger's --operating-currency.
     """
@@ -112,8 +119,16 @@ def bean_import(
     else:
         filtered = ofx_data.transactions
 
+    # Check if account specified, else prompt
+    if not account:
+        account = prompt(
+            f"Beancount account OFX belongs to > ",
+            validator=valid_account,
+            completer=account_completer)
+    console.print(f"OFX file using account: [answer]{account}[/]")
+
     # Match transactions not in beans into pending
-    pending = ofx_pending(filtered, ledger_data.transactions, ofx_data.account_id)
+    pending = ofx_pending(filtered, ledger_data.transactions, account)
     if len(pending):
         console.print(f"Found [number]{len(pending)}[/] transactions not in LEDGER")
     else:
@@ -159,13 +174,19 @@ def bean_import(
         # Reconcile
         if resolve[0] == "r":
             console.print(f"...Reconciling")
-            reconcile_matches = ofx_matches(txn, ledger_data.transactions)
+            reconcile_matches = ofx_matches(txn, ledger_data.transactions, account)
 
             # Matches found
             if len(reconcile_matches):
                 console.print(f"...Found matches:\n")
                 for i, match in enumerate(reconcile_matches):
+                    post_match = None
+                    for post in match.entry.postings:
+                        if post.account == account:
+                            post_match = post
+                            break
                     console.print(f"   [{i}] {match.print_head(theme=True)}")
+                    console.print(f"          {post_match.account} {post_match.units.number}")
                 if len(reconcile_matches) == 1:
                     match_range = '[0]'
                 else:
@@ -180,7 +201,10 @@ def bean_import(
                     bean_reconcile = reconcile_matches[int(reconcile_match)]
                     bean_linecount = len(bean_reconcile.print().strip().split('\n'))
                     console.print(f"...Reconciling {bean_reconcile.print_head(theme=True)}\n")
-                    bean_reconcile.entry.meta.update({'account': ofx_data.account_id, 'id': txn.id})
+                    for post in bean_reconcile.entry.postings:
+                        if post.account == account:
+                            post.meta.update({'rec': txn.id})
+                            break
                     replace_lines(
                         err_console,
                         bean_reconcile.entry.meta['filename'],

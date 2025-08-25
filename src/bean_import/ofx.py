@@ -42,27 +42,23 @@ def ofx_load(console, ofx_path):
         console.print(f"[error]Error parsing OFX file: {str(e)}[/]")
         return None
 
-def ofx_pending(txns, beans, account):
+def ofx_pending(txns, beans, acct):
     pending = []
     for txn in txns:
         found = False
         for bean in beans:
-            if 'account' in bean.entry.meta and 'id' in bean.entry.meta:
-                if bean.entry.meta['id'] == txn.id and bean.entry.meta['account'] == account:
+            for post in bean.entry.postings:
+                if 'rec' in post.meta and post.meta['rec'] == txn.id:
                     found = True
                     break
         if not found:
             pending.append(txn)
     return pending
 
-def ofx_matches(txn, beans):
+def ofx_matches(txn, beans, acct):
     matches = []
     for bean in beans:
-        if 'account' not in bean.entry.meta and 'id' not in bean.entry.meta:
-            if dec(bean.amount) == dec(txn.abs_amount):
+        for post in bean.entry.postings:
+            if post.account == acct and 'rec' not in post.meta and abs(post.units.number) == dec(txn.abs_amount):
                 matches.append(bean)
-            else:
-                for post in bean.entry.postings:
-                    if abs(post.units.number) == dec(txn.abs_amount):
-                        matches.append(bean)
     return matches
