@@ -152,25 +152,6 @@ def bean_import(
             bottom_toolbar=resolve_toolbar,
             validator=ValidOptions(['r', 'reconcile', 'i', 'insert', 's', 'skip', 'q', 'quit'])).lower()
 
-        # Replace payee
-        if resolve[0] == 'r' or resolve[0] == 'i':
-            payee_completer = FuzzyCompleter(WordCompleter(get_json_values(payees), sentence=True))
-            payee = get_key(payees, txn.payee)
-
-            # Payee not found, replace
-            if not payee:
-                payee = prompt(
-                    f"...Replace '{txn.payee}'? > ",
-                    key_bindings=cancel_bindings,
-                    bottom_toolbar=cancel_toolbar,
-                    completer=payee_completer)
-
-            # Payee entered
-            if payee:
-                console.print(f"...Replaced [string]{txn.payee}[/] with [answer]{payee}[/]")
-                set_key(payees, txn.payee, payee)
-                txn.payee = payee
-
         # Reconcile
         if resolve[0] == "r":
             console.print(f"...Reconciling")
@@ -227,6 +208,24 @@ def bean_import(
         # Insert
         if resolve[0] == "i":
             console.print(f"...Inserting")
+
+            # Replace payee
+            payee_completer = FuzzyCompleter(WordCompleter(get_json_values(payees), sentence=True))
+            payee = get_key(payees, txn.payee)
+
+            # Payee not found, replace
+            if not payee:
+                payee = prompt(
+                    f"...Replace '{txn.payee}'? > ",
+                    key_bindings=cancel_bindings,
+                    bottom_toolbar=cancel_toolbar,
+                    completer=payee_completer)
+
+            # Payee entered
+            if payee:
+                console.print(f"...Replaced [string]{txn.payee}[/] with [answer]{payee}[/]")
+                set_key(payees, txn.payee, payee)
+                txn.payee = payee
 
             # Add credit postings until total is equal to transaction amount
             new_bean = ledger_bean(txn, ofx_data.account_id)
