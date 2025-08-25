@@ -237,6 +237,11 @@ def bean_import(
             console.print(f"\n{new_bean.print()}")
             new_bean.add_posting(get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, operating_currency, account_completer))
 
+            # Add rec meta to account
+            for post in new_bean.entry.postings:
+                if post.account == account:
+                    post.meta.update({'rec': txn.id})
+
             # Edit final
             while True:
                 console.print(f"\n{new_bean.print()}")

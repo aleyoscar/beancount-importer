@@ -95,4 +95,4 @@ def ledger_load(console, ledger_path):
         return None
 
 def ledger_bean(txn, account_id):
-    return Bean(Transaction({"account": account_id, "id": txn.id}, txn.date, '*', txn.payee, '', [], [], []))
+    return Bean(Transaction(None, txn.date, '*', txn.payee, None, None, None, None))
