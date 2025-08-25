@@ -66,7 +66,7 @@ class Bean:
                 post_i = i
                 post_amount += post.units.number
                 break
-        new_post = Posting(posting["account"], Amount(post_amount, posting["currency"]), None, None, None, None)
+        new_post = Posting(posting["account"], Amount(post_amount, posting["currency"]), None, None, None, {})
         if post_i >= 0: self.entry.postings[post_i] = new_post
         else: self.entry.postings.append(new_post)
         self.total()
@@ -95,4 +95,4 @@ def ledger_load(console, ledger_path):
         return None
 
 def ledger_bean(txn, account_id):
-    return Bean(Transaction(None, txn.date, '*', txn.payee, None, None, None, None))
+    return Bean(Transaction({}, txn.date, '*', txn.payee, '', [], [], []))
