@@ -137,8 +137,8 @@ def bean_import(
     # Parse each pending transaction
     reconcile_count = 0
     insert_count = 0
-    for txn in pending:
-        console.print(f"Parsing: {txn.print(theme=True)}")
+    for txn_count, txn in enumerate(pending):
+        console.print(f"Parsing {txn_count+1}/{len(pending)}: {txn.print(theme=True)}")
 
         # Update ledger data for every transaction
         ledger_data = ledger_load(err_console, ledger)
