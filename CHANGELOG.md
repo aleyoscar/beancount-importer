@@ -59,4 +59,3 @@
 * **app:** Validate ofx and ledger file paths
 * **app:** Add prompt_toolkit dependency
 * **core:** Add GNU GPL-3.0 license
-
