@@ -23,7 +23,7 @@ def get_json(json_path):
     data = {}
     if not os.path.exists(json_path):
         set_json(data, json_path)
-    with open(json_path, 'r') as file:
+    with open(json_path, 'r', encoding='utf-8') as file:
         try:
             data = json.load(file)
         except json.JSONDecodeError:
