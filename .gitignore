@@ -4,3 +4,5 @@ __pycache__/
 *.beancount
 *.ledger
 *.json
+.chglog
+gen-chglog.py
