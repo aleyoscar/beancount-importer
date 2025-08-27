@@ -78,14 +78,14 @@ def bean_import(
     """
 
     theme = Theme({
-        "number": "blue",
+        "number": "cyan",
         "date": "orange4",
         "flag": "magenta",
         "error": "red",
         "file": "grey50",
         "string": "green",
         "warning": "yellow",
-        "answer": "cyan"
+        "answer": "blue"
     })
 
     console = Console(theme=theme)
@@ -368,7 +368,7 @@ def bean_import(
                     buffer += f"\n{new_bean.print()}"
                 console.print(f"...Inserted {new_bean.print_head(theme=True)} into {console_insert}")
                 insert_count += 1
-        
+
         # Skip transaction
         if resolve[0] == "s":
             console.print(f"...Skipping")
