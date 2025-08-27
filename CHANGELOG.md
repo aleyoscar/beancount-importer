@@ -1,4 +1,21 @@
 
+<a name="v0.1.1"></a>
+## [v0.1.1](https://github.com/aleyoscar/beancount-importer/compare/v0.1.0...v0.1.1) (2025-08-27)
+
+### Bug Fixes
+
+* **app:** Insert txn if matches not desired. Fixes [#1](https://github.com/aleyoscar/beancount-importer/issues/1)
+* **app:** Remove autocomplete duplicates. Fixes [#2](https://github.com/aleyoscar/beancount-importer/issues/2)
+
+### Code Refactoring
+
+* **app:** Cleanup code
+
+### Features
+
+* **app:** Allow cancelling during insertion. Closes [#3](https://github.com/aleyoscar/beancount-importer/issues/3)
+
+
 <a name="v0.1.0"></a>
 ## v0.1.0 (2025-08-26)
 
@@ -59,3 +76,4 @@
 * **app:** Validate ofx and ledger file paths
 * **app:** Add prompt_toolkit dependency
 * **core:** Add GNU GPL-3.0 license
+
