@@ -209,7 +209,8 @@ def bean_import(
             console.print(f"...Inserting")
 
             # Replace payee
-            payee_completer = FuzzyCompleter(WordCompleter(get_json_values(payees), sentence=True))
+            payees_set = sorted(set(get_json_values(payees)))
+            payee_completer = FuzzyCompleter(WordCompleter(payees_set, sentence=True))
             payee = get_key(payees, txn.payee)
 
             # Payee not found, replace
