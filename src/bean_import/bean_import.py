@@ -35,18 +35,27 @@ def account_callback(acct_str: str):
 def get_posting(type, default_amount, default_currency, op_cur, completer):
     account = prompt(
         f"...{type} account > ",
+        bottom_toolbar=cancel_toolbar,
+        key_bindings=cancel_bindings,
         validator=valid_account,
         completer=completer)
+    if not account: return None
     amount = prompt(
         f"...{type} amount > ",
+        bottom_toolbar=cancel_toolbar,
+        key_bindings=cancel_bindings,
         validator=valid_float,
         default=cur(default_amount))
+    if not amount: return None
     if not op_cur:
         currency = prompt(
             f"...{type} currency > ",
-            default=default_currency)
+            default=default_currency,
+            bottom_toolbar=cancel_toolbar,
+            key_bindings=cancel_bindings)
     else:
         currency = default_currency
+    if not currency: return None
     return {"account": account, "amount": amount, "currency": currency}
 
 def bean_import(
@@ -231,26 +240,40 @@ def bean_import(
 
             # Add credit postings until total is equal to transaction amount
             new_bean = ledger_bean(txn, ofx_data.account_id)
+            new_posting = None
             while new_bean.amount < txn.abs_amount:
                 console.print(f"\n{new_bean.print()}")
-                new_bean.add_posting(get_posting("Credit", txn.abs_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer))
+                new_posting = get_posting("Credit", txn.abs_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer)
+                if new_posting is not None:
+                    new_bean.add_posting(new_posting)
+                else:
+                    break
 
             # Add debit posting
-            console.print(f"\n{new_bean.print()}")
-            new_bean.add_posting(get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, operating_currency, account_completer))
+            if new_posting is not None:
+                console.print(f"\n{new_bean.print()}")
+                new_posting = get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, operating_currency, account_completer)
+                if new_posting is not None:
+                    new_bean.add_posting(new_posting)
 
-            # Add rec meta to account
-            for post in new_bean.entry.postings:
-                if post.account == account:
-                    post.meta.update({'rec': txn.id})
+                # Add rec meta to account
+                for post in new_bean.entry.postings:
+                    if post.account == account:
+                        post.meta.update({'rec': txn.id})
 
             # Edit final
+            edit_cancelled = False
             while True:
                 console.print(f"\n{new_bean.print()}")
                 edit_option = prompt(
                     f"...Edit transaction? > ",
                     validator=ValidOptions(['d', 'date', 'f', 'flag', 'p', 'payee', 'n', 'narration', 't', 'tags', 'l', 'links', 'o', 'postings', 's', 'save']),
-                    bottom_toolbar=edit_toolbar)
+                    bottom_toolbar=edit_toolbar,
+                    key_bindings=cancel_bindings)
+
+                if not edit_option:
+                    edit_cancelled = True
+                    break
 
                 # Edit date
                 if edit_option[0] == 'd':
@@ -336,14 +359,16 @@ def bean_import(
                     break
 
             # Post entry to output (if stdout, save to string)
-            if output:
-                console_insert = f'[file]{output}[/]'
-                append_lines(err_console, output, new_bean.print())
-            else:
-                console_insert = f'[file]buffer[/]'
-                buffer += f"\n{new_bean.print()}"
-            console.print(f"...Inserted {new_bean.print_head(theme=True)} into {console_insert}")
-            insert_count += 1
+            if not edit_cancelled:
+                if output:
+                    console_insert = f'[file]{output}[/]'
+                    append_lines(err_console, output, new_bean.print())
+                else:
+                    console_insert = f'[file]buffer[/]'
+                    buffer += f"\n{new_bean.print()}"
+                console.print(f"...Inserted {new_bean.print_head(theme=True)} into {console_insert}")
+                insert_count += 1
+        
         # Skip transaction
         if resolve[0] == "s":
             console.print(f"...Skipping")
