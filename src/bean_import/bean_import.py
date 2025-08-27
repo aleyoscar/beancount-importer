@@ -157,6 +157,7 @@ def bean_import(
             reconcile_matches = ofx_matches(txn, ledger_data.transactions, account)
 
             # Matches found
+            matches_canceled = False
             if len(reconcile_matches):
                 console.print(f"...Found matches:\n")
                 for i, match in enumerate(reconcile_matches):
@@ -193,9 +194,10 @@ def bean_import(
                         bean_linecount)
                     console.print(bean_reconcile.print())
                     reconcile_count += 1
-
+                else: matches_canceled = True
+            else: matches_canceled = True
             # No matches found
-            else:
+            if matches_canceled:
                 reconcile_insert = prompt(
                     f"...No matching transactions found. Would you like to insert instead? [Y/n] > ",
                     default='y',
