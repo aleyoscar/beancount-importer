@@ -6,7 +6,6 @@ from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_t
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
-# from prompt_toolkit.formatted_text import HTML
 from rich.console import Console
 from rich.theme import Theme
 from typing_extensions import Annotated
