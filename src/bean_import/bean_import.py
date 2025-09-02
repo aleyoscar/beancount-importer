@@ -1,8 +1,8 @@
 import typer
-from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines
+from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines, dec
 from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load, ofx_pending, ofx_matches
-from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar, valid_date, valid_link_tag, is_account
+from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar, valid_date, valid_link_tag, is_account, postings_toolbar
 from pathlib import Path
 from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
@@ -35,14 +35,14 @@ def account_callback(acct_str: str):
 def get_posting(type, default_amount, default_currency, op_cur, completer):
     account = prompt(
         f"...{type} account > ",
-        bottom_toolbar=cancel_toolbar,
+        bottom_toolbar=postings_toolbar(cur(default_amount)),
         key_bindings=cancel_bindings,
         validator=valid_account,
         completer=completer)
     if not account: return None
     amount = prompt(
         f"...{type} amount > ",
-        bottom_toolbar=cancel_toolbar,
+        bottom_toolbar=postings_toolbar(cur(default_amount)),
         key_bindings=cancel_bindings,
         validator=valid_float,
         default=cur(default_amount))
@@ -51,12 +51,12 @@ def get_posting(type, default_amount, default_currency, op_cur, completer):
         currency = prompt(
             f"...{type} currency > ",
             default=default_currency,
-            bottom_toolbar=cancel_toolbar,
+            bottom_toolbar=postings_toolbar(cur(default_amount)),
             key_bindings=cancel_bindings)
     else:
         currency = default_currency
     if not currency: return None
-    return {"account": account, "amount": amount, "currency": currency}
+    return {"account": account, "amount": cur(amount), "currency": currency}
 
 def bean_import(
     ofx: Annotated[Path, typer.Argument(help="The ofx file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
@@ -238,12 +238,22 @@ def bean_import(
                 set_key(payees, txn.payee, payee)
                 txn.payee = payee
 
+            # Update total transaction amount
+            new_amount = txn.abs_amount
+            new_amount = float(prompt(
+                f"...Update total amount? > ",
+                key_bindings=cancel_bindings,
+                bottom_toolbar=cancel_toolbar,
+                validator=valid_float,
+                default=cur(new_amount)
+            ))
+
             # Add credit postings until total is equal to transaction amount
             new_bean = ledger_bean(txn, ofx_data.account_id)
             new_posting = None
-            while new_bean.amount < txn.abs_amount:
+            while new_bean.amount < new_amount:
                 console.print(f"\n{new_bean.print()}")
-                new_posting = get_posting("Credit", txn.abs_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer)
+                new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer)
                 if new_posting is not None:
                     new_bean.add_posting(new_posting)
                 else:
@@ -252,7 +262,7 @@ def bean_import(
             # Add debit posting
             if new_posting is not None:
                 console.print(f"\n{new_bean.print()}")
-                new_posting = get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, operating_currency, account_completer)
+                new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer)
                 if new_posting is not None:
                     new_bean.add_posting(new_posting)
 
@@ -346,11 +356,19 @@ def bean_import(
                 # Edit postings
                 if edit_option[0] == 'o':
                     new_bean.update(postings=[])
-                    while new_bean.amount < txn.abs_amount:
+                    # Update total transaction amount
+                    new_amount = float(prompt(
+                        f"...Update total amount? > ",
+                        key_bindings=cancel_bindings,
+                        bottom_toolbar=cancel_toolbar,
+                        validator=valid_float,
+                        default=cur(new_amount)
+                    ))
+                    while new_bean.amount < new_amount:
                         console.print(f"\n{new_bean.print()}")
-                        new_bean.add_posting(get_posting("Credit", txn.abs_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer))
+                        new_bean.add_posting(get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer))
                     console.print(f"\n{new_bean.print()}")
-                    new_bean.add_posting(get_posting("Debit", txn.abs_amount * -1, ledger_data.currency, operating_currency, account_completer))
+                    new_bean.add_posting(get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer))
                     continue
 
                 # Save and finish

@@ -60,6 +60,9 @@ def resolve_toolbar():
 def cancel_toolbar():
     return f"[c-x] to Cancel"
 
+def postings_toolbar(amt):
+    return f"({amt}) left  [c-x] to Cancel"
+
 def confirm_toolbar():
     return f"[Y]es  [N]o"
 
