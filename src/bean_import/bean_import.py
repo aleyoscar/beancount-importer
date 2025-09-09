@@ -4,8 +4,9 @@ from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load, ofx_pending, ofx_matches
 from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar, valid_date, valid_link_tag, is_account, postings_toolbar
 from pathlib import Path
-from prompt_toolkit import prompt
+from prompt_toolkit import prompt, HTML
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
+from prompt_toolkit.styles import Style
 from rich.console import Console
 from rich.theme import Theme
 from typing_extensions import Annotated
@@ -32,27 +33,32 @@ def account_callback(acct_str: str):
     if not is_account(acct_str): raise typer.BadParameter("Please enter a valid beancount account, EX: 'Assets:Savings'")
     return acct_str
 
-def get_posting(type, default_amount, default_currency, op_cur, completer):
+def get_posting(type, default_amount, default_currency, op_cur, completer, style, color):
+    if style and color:
+        type = f"<{color}>{type}</{color}>"
     account = prompt(
-        f"...{type} account > ",
+        HTML(f"...{type} account > "),
         bottom_toolbar=postings_toolbar(cur(default_amount)),
         key_bindings=cancel_bindings,
         validator=valid_account,
-        completer=completer)
+        completer=completer,
+        style=style)
     if not account: return None
     amount = prompt(
-        f"...{type} amount > ",
+        HTML(f"...{type} amount > "),
         bottom_toolbar=postings_toolbar(cur(default_amount)),
         key_bindings=cancel_bindings,
         validator=valid_float,
-        default=cur(default_amount))
+        default=cur(default_amount),
+        style=style)
     if not amount: return None
     if not op_cur:
         currency = prompt(
-            f"...{type} currency > ",
+            HTML(f"...{type} currency > "),
             default=default_currency,
             bottom_toolbar=postings_toolbar(cur(default_amount)),
-            key_bindings=cancel_bindings)
+            key_bindings=cancel_bindings,
+            style=style)
     else:
         currency = default_currency
     if not currency: return None
@@ -85,7 +91,14 @@ def bean_import(
         "file": "grey50",
         "string": "green",
         "warning": "yellow",
-        "answer": "blue"
+        "answer": "blue",
+        "pos": "green",
+        "neg": "orange_red1"
+    })
+
+    style = Style.from_dict({
+        "pos": "#008700",
+        "neg": "#ff5f00"
     })
 
     console = Console(theme=theme)
@@ -253,7 +266,7 @@ def bean_import(
             new_posting = None
             while new_bean.amount < new_amount:
                 console.print(f"\n{new_bean.print()}")
-                new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer)
+                new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, style, "pos")
                 if new_posting is not None:
                     new_bean.add_posting(new_posting)
                 else:
@@ -262,7 +275,7 @@ def bean_import(
             # Add debit posting
             if new_posting is not None:
                 console.print(f"\n{new_bean.print()}")
-                new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer)
+                new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, style, "neg")
                 if new_posting is not None:
                     new_bean.add_posting(new_posting)
 
@@ -367,9 +380,9 @@ def bean_import(
                     ))
                     while new_bean.amount < new_amount:
                         console.print(f"\n{new_bean.print()}")
-                        new_bean.add_posting(get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer))
+                        new_bean.add_posting(get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, style, "pos"))
                     console.print(f"\n{new_bean.print()}")
-                    new_bean.add_posting(get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer))
+                    new_bean.add_posting(get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, style, "neg"))
                     continue
 
                 # Save and finish
