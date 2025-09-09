@@ -283,11 +283,6 @@ def bean_import(
                     new_posting['amount'] = eval_string_dec(console, new_posting['amount'])
                     new_bean.add_posting(new_posting)
 
-                # Add rec meta to account
-                for post in new_bean.entry.postings:
-                    if post.account == account:
-                        post.meta.update({'rec': txn.id})
-
             # Edit final
             edit_cancelled = False
             while True:
@@ -404,14 +399,37 @@ def bean_import(
 
             # Post entry to output (if stdout, save to string)
             if not edit_cancelled:
-                if output:
-                    console_insert = f'[file]{output}[/]'
-                    append_lines(err_console, output, new_bean.print())
-                else:
-                    console_insert = f'[file]buffer[/]'
-                    buffer += f"\n{new_bean.print()}"
-                console.print(f"...Inserted {new_bean.print_head(theme=True)} into {console_insert}")
-                insert_count += 1
+
+                # Add rec meta to account
+                found_account = False
+                for post in new_bean.entry.postings:
+                    if post.account == account:
+                        found_account = True
+                        post.meta.update({'rec': txn.id})
+                        break
+                if not found_account:
+                    no_account_found = prompt(
+                        HTML(f"...OFX account <pos>{account}</pos> not found, continue anyways? [Y/n] > "),
+                        default='y',
+                        bottom_toolbar=confirm_toolbar,
+                        validator=ValidOptions(['y', 'n']),
+                        style=style).lower()
+                    if no_account_found == 'n':
+                        console.print(f"...Skipping")
+                        found_account = False
+                    else:
+                        found_account = True
+
+                if found_account:
+                    if output:
+                        console_insert = f'[file]{output}[/]'
+                        append_lines(err_console, output, new_bean.print())
+                    else:
+                        console_insert = f'[file]buffer[/]'
+                        buffer += f"\n{new_bean.print()}"
+                    console.print(f"...Inserted {new_bean.print_head(theme=True)} into {console_insert}")
+                    console.print(f"\n{new_bean.print()}")
+                    insert_count += 1
 
         # Skip transaction
         if resolve[0] == "s":
