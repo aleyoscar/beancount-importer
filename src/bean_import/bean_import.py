@@ -1,8 +1,8 @@
 import typer
-from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines, dec
+from .helpers import get_key, set_key, get_json_values, replace_lines, cur, append_lines, dec, eval_string_dec, eval_string_float
 from .ledger import ledger_load, ledger_bean
 from .ofx import ofx_load, ofx_pending, ofx_matches
-from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_float, valid_account, edit_toolbar, valid_date, valid_link_tag, is_account, postings_toolbar
+from .prompts import resolve_toolbar, cancel_bindings, cancel_toolbar, confirm_toolbar, ValidOptions, valid_account, edit_toolbar, valid_date, valid_link_tag, is_account, postings_toolbar, valid_math_float
 from pathlib import Path
 from prompt_toolkit import prompt, HTML
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
@@ -48,7 +48,7 @@ def get_posting(type, default_amount, default_currency, op_cur, completer, style
         HTML(f"...{type} amount > "),
         bottom_toolbar=postings_toolbar(cur(default_amount)),
         key_bindings=cancel_bindings,
-        validator=valid_float,
+        validator=valid_math_float,
         default=cur(default_amount),
         style=style)
     if not amount: return None
@@ -62,7 +62,7 @@ def get_posting(type, default_amount, default_currency, op_cur, completer, style
     else:
         currency = default_currency
     if not currency: return None
-    return {"account": account, "amount": cur(amount), "currency": currency}
+    return {"account": account, "amount": amount, "currency": currency}
 
 def bean_import(
     ofx: Annotated[Path, typer.Argument(help="The ofx file to parse", exists=True, file_okay=True, dir_okay=False, readable=True, resolve_path=True)],
@@ -253,13 +253,15 @@ def bean_import(
 
             # Update total transaction amount
             new_amount = txn.abs_amount
-            new_amount = float(prompt(
+            new_amount = prompt(
                 f"...Update total amount? > ",
                 key_bindings=cancel_bindings,
                 bottom_toolbar=cancel_toolbar,
-                validator=valid_float,
+                validator=valid_math_float,
                 default=cur(new_amount)
-            ))
+            )
+            if new_amount:
+                new_amount = eval_string_float(console, new_amount)
 
             # Add credit postings until total is equal to transaction amount
             new_bean = ledger_bean(txn, ofx_data.account_id)
@@ -268,6 +270,7 @@ def bean_import(
                 console.print(f"\n{new_bean.print()}")
                 new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, style, "pos")
                 if new_posting is not None:
+                    new_posting['amount'] = eval_string_dec(console, new_posting['amount'])
                     new_bean.add_posting(new_posting)
                 else:
                     break
@@ -277,6 +280,7 @@ def bean_import(
                 console.print(f"\n{new_bean.print()}")
                 new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, style, "neg")
                 if new_posting is not None:
+                    new_posting['amount'] = eval_string_dec(console, new_posting['amount'])
                     new_bean.add_posting(new_posting)
 
                 # Add rec meta to account
@@ -371,18 +375,26 @@ def bean_import(
                 if edit_option[0] == 'o':
                     new_bean.update(postings=[])
                     # Update total transaction amount
-                    new_amount = float(prompt(
+                    new_amount = prompt(
                         f"...Update total amount? > ",
                         key_bindings=cancel_bindings,
                         bottom_toolbar=cancel_toolbar,
-                        validator=valid_float,
+                        validator=valid_math_float,
                         default=cur(new_amount)
-                    ))
+                    )
+                    if new_amount:
+                        new_amount = eval_string_float(console, new_amount)
                     while new_bean.amount < new_amount:
                         console.print(f"\n{new_bean.print()}")
-                        new_bean.add_posting(get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, style, "pos"))
+                        new_posting = get_posting("Credit", new_amount - new_bean.amount, ledger_data.currency, operating_currency, account_completer, style, "pos")
+                        if new_posting is not None:
+                            new_posting['amount'] = eval_string_dec(console, new_posting['amount'])
+                            new_bean.add_posting(new_posting)
                     console.print(f"\n{new_bean.print()}")
-                    new_bean.add_posting(get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, style, "neg"))
+                    new_posting = get_posting("Debit", new_amount * -1, ledger_data.currency, operating_currency, account_completer, style, "neg")
+                    if new_posting is not None:
+                        new_posting['amount'] = eval_string_dec(console, new_posting['amount'])
+                        new_bean.add_posting(new_posting)
                     continue
 
                 # Save and finish

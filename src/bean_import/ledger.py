@@ -3,7 +3,7 @@ from beancount.core.data import Transaction, Posting, Open
 from beancount.core.amount import Amount
 from beancount.parser import printer
 from datetime import datetime
-from .helpers import cur, del_spaces, set_from_sets
+from .helpers import cur, dec, del_spaces, set_from_sets
 from decimal import Decimal
 
 class Ledger:
@@ -61,7 +61,7 @@ class Bean:
 
     def add_posting(self, posting):
         post_i = -1
-        post_amount = Decimal(posting['amount'])
+        post_amount = dec(posting['amount'])
         for i, post in enumerate(self.entry.postings):
             if post.account == posting['account']:
                 post_i = i

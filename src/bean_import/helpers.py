@@ -61,3 +61,18 @@ def del_spaces(text):
 
 def set_from_sets(arr):
     return sorted(set().union(*arr))
+
+def eval_string_dec(console, text):
+    try:
+        result = eval(text, {"__builtins__": {}}, {})
+        return dec(result)
+    except ZeroDivisionError:
+        console.print(f"[error]Division by zero is not allowed[/]")
+    except Exception as e:
+        console.print(f"[error]<<ERROR> Error evaluating expression: {str(e)}[/]")
+
+def eval_string_float(console, text):
+    try:
+        return float(eval_string_dec(console, text))
+    except Exception as e:
+        console.print(f"[error]<<ERROR> Error converting expression to float: {str(e)}[/]")

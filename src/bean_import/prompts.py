@@ -20,6 +20,10 @@ def is_float(text):
     except ValueError:
         return False
 
+def is_math_float(text):
+    pattern = r'^(-?\d*\.?\d+)([+\-*/](-?\d*\.?\d+))*$'
+    return bool(re.match(pattern, text))
+
 def is_account(text):
     return bool(re.fullmatch(r"^(Assets|Liabilities|Capital|Income|Expenses):[A-Z][A-Za-z0-9-]*(:[A-Z][A-Za-z0-9-]*)*$", text))
 
@@ -40,6 +44,7 @@ def is_link_tag(text):
     return True
 
 valid_float = Validator.from_callable(is_float, error_message="Not a valid number", move_cursor_to_end=True)
+valid_math_float = Validator.from_callable(is_math_float, error_message="Not a valid number or expression", move_cursor_to_end=True)
 valid_account = Validator.from_callable(is_account, error_message="Not a valid account", move_cursor_to_end=True)
 valid_date = Validator.from_callable(is_date, error_message="Not a valid date", move_cursor_to_end=True)
 valid_link_tag = Validator.from_callable(is_link_tag, error_message="Not a valid link or tag", move_cursor_to_end=True)
