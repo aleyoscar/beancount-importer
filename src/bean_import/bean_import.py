@@ -220,7 +220,7 @@ def bean_import(
             console.print(f"...Inserting")
 
             # Replace payee
-            payees_set = sorted(set(get_json_values(payees)))
+            payees_set = sorted(set(get_json_values(payees)).union(ledger_data.payees))
             payee_completer = FuzzyCompleter(WordCompleter(payees_set, sentence=True))
             payee = get_key(payees, txn.payee)
 
@@ -312,7 +312,8 @@ def bean_import(
                     edit_payee = prompt(
                         f"...Enter new payee > ",
                         key_bindings=cancel_bindings,
-                        bottom_toolbar=cancel_toolbar)
+                        bottom_toolbar=cancel_toolbar,
+                        completer=payee_completer)
                     if edit_payee:
                         new_bean.update(payee=edit_payee)
                     continue

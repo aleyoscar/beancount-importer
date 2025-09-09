@@ -16,6 +16,7 @@ class Ledger:
         self.tags = set_from_sets([t.tags for t in entries if isinstance(t, Transaction)])
         self.links = set_from_sets([t.links for t in entries if isinstance(t, Transaction)])
         self.errors = [str(err) for err in errors] if errors else []
+        self.payees = sorted(set([t.payee for t in entries if isinstance(t, Transaction) and t.payee]))
 
 class Bean:
     def __init__(self, entry):
