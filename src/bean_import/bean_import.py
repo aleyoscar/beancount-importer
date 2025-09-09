@@ -33,6 +33,11 @@ def account_callback(acct_str: str):
     if not is_account(acct_str): raise typer.BadParameter("Please enter a valid beancount account, EX: 'Assets:Savings'")
     return acct_str
 
+def flag_callback(flag_str: str):
+    if flag_str != '*' and flag_str != '!':
+        raise typer.BadParameter("Invalid flag string, please enter either '*' or '!'.")
+    return flag_str
+
 def get_posting(type, default_amount, default_currency, op_cur, completer, style, color):
     if style and color:
         type = f"<{color}>{type}</{color}>"
@@ -71,7 +76,8 @@ def bean_import(
     period: Annotated[str, typer.Option("--period", "-d", help="Specify a year, month or day period to parse from the ofx file in the format YYYY, YYYY-MM or YYYY-MM-DD", callback=period_callback)]="",
     account: Annotated[str, typer.Option("--account", "-a", help="Specify the account the ofx file belongs to", callback=account_callback)]="",
     payees: Annotated[Path, typer.Option("--payees", "-p", help="The payee file to use for name substitutions", exists=False)]="payees.json",
-    operating_currency: Annotated[bool, typer.Option("--operating_currency", "-c", help="Skip the currency prompt when inserting and use the ledger's operating_currency", )]=False
+    operating_currency: Annotated[bool, typer.Option("--operating_currency", "-c", help="Skip the currency prompt when inserting and use the ledger's operating_currency", )]=False,
+    flag: Annotated[str, typer.Option("--flag", "-f", help="Specify the default flag to set for transactions", callback=flag_callback)]="*"
 ):
     """
     Parse an OFX file based on a beancount LEDGER and output transaction entries to stdout
@@ -81,6 +87,7 @@ def bean_import(
     Optionally specify a the --account the ofx file belongs to.
     Optionally specify a --payees json file to use for payee name substitutions.
     Optionally skip the currency prompt when inserting and use the ledger's --operating-currency.
+    Optionally set the default --flag to set for transactions. [*/!]
     """
 
     theme = Theme({
@@ -264,7 +271,7 @@ def bean_import(
                 new_amount = eval_string_float(console, new_amount)
 
             # Add credit postings until total is equal to transaction amount
-            new_bean = ledger_bean(txn, ofx_data.account_id)
+            new_bean = ledger_bean(txn, ofx_data.account_id, flag)
             new_posting = None
             while new_bean.amount < new_amount:
                 console.print(f"\n{new_bean.print()}")
