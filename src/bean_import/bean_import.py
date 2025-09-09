@@ -300,7 +300,7 @@ def bean_import(
                     bottom_toolbar=edit_toolbar,
                     key_bindings=cancel_bindings)
 
-                if not edit_option:
+                if edit_option is None:
                     edit_cancelled = True
                     break
 
@@ -400,7 +400,7 @@ def bean_import(
                     continue
 
                 # Save and finish
-                if edit_option[0] == 's':
+                if edit_option[0] == 's' or edit_option == '':
                     console.print(f"...Finished editing")
                     break
 

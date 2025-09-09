@@ -12,6 +12,8 @@ class ValidOptions(Validator):
         text = document.text
         if text and text.lower() not in self.options:
             raise ValidationError(message="Please enter a valid response")
+        elif not text:
+            raise ValidationError(message="Please enter a response")
 
 def is_float(text):
     try:
